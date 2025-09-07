@@ -1,0 +1,17 @@
+[package]
+name = "prediction_market"
+version = "1.0.0"
+authors = ["AptosPredict Team"]
+
+[addresses]
+prediction_market = "0x35a304995e62d1e91e576f3d43ceeb226372dfca8f246010b519f9d549b2fc6b"
+
+[dev-addresses]
+prediction_market = "0x42"
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-core.git"
+subdir = "aptos-move/framework/aptos-framework"
+rev = "main"
+
+[dev-dependencies]
