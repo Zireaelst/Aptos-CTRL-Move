@@ -185,23 +185,26 @@ module prediction_market::market {
         // Take payment from user
         let payment = coin::withdraw<AptosCoin>(user, amount);
         
-        // Calculate platform fee
+        // Extract fee first
         let fee_amount = (amount * market_state.platform_fee_rate) / 10000;
         let fee_coin = coin::extract(&mut payment, fee_amount);
         coin::merge(&mut market_state.fee_pool, fee_coin);
         
-        // Add remaining amount to appropriate pool
-        let net_amount = amount - fee_amount;
+        // The remaining payment coin should now have net_amount value
+        let net_amount = coin::value(&payment);
+        
         if (outcome == OUTCOME_YES) {
             market.yes_pool = market.yes_pool + net_amount;
         } else {
             market.no_pool = market.no_pool + net_amount;
         };
         
-        market.total_volume = market.total_volume + amount;
+        // For this simple implementation, we'll deposit the remaining coins
+        // to the platform fee pool as well (in a real implementation, 
+        // you'd want to store these separately or in escrow)
+        coin::merge(&mut market_state.fee_pool, payment);
         
-        // Destroy the payment coin after extracting fee
-        coin::destroy_zero(payment);
+        market.total_volume = market.total_volume + amount;
 
         // Update user portfolio
         if (!exists<UserPortfolio>(user_addr)) {

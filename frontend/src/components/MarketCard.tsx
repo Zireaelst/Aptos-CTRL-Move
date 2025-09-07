@@ -21,11 +21,32 @@ export default function MarketCard({ market, onUpdate }: MarketCardProps) {
   const [loading, setLoading] = useState(false)
   const [betAmount, setBetAmount] = useState('')
 
-  const totalPool = market.yes_pool + market.no_pool
-  const yesPercentage = totalPool > 0 ? (market.yes_pool / totalPool) * 100 : 50
-  const noPercentage = totalPool > 0 ? (market.no_pool / totalPool) * 100 : 50
+  // Convert string values to numbers for proper calculation
+  const yesPool = Number(market.yes_pool)
+  const noPool = Number(market.no_pool)
+  const totalPool = yesPool + noPool
+  
+  // Calculate percentages for display - showing implied probability
+  let yesPercentage = 50
+  let noPercentage = 50
+  
+  if (totalPool > 0) {
+    // Simple direct calculation - more intuitive for users
+    yesPercentage = (yesPool / totalPool) * 100
+    noPercentage = (noPool / totalPool) * 100
+  }
+  
+  // Debug log to see the actual values
+  console.log('Market pools:', {
+    id: market.id,
+    yes_pool: yesPool,
+    no_pool: noPool,
+    total: totalPool,
+    yesPercentage: yesPercentage.toFixed(1),
+    noPercentage: noPercentage.toFixed(1)
+  })
 
-  const handleBet = async (outcome: 0 | 1) => {
+  const handleBet = async (outcome: 1 | 2) => {
     if (!betAmount || isNaN(parseFloat(betAmount))) {
       toast.error('Please enter a valid bet amount')
       return
@@ -101,12 +122,12 @@ export default function MarketCard({ market, onUpdate }: MarketCardProps) {
                 {yesPercentage.toFixed(1)}%
               </div>
               <div className="text-xs text-neutral-400">
-                {formatAPT(market.yes_pool)} APT
+                {formatAPT(yesPool)} APT
               </div>
             </div>
 
             <div className={`p-4 rounded-xl border transition-all duration-300 ${
-              isResolved && winningOutcome === 0 
+              isResolved && winningOutcome === 2 
                 ? 'bg-red-500/20 border-red-500/50' 
                 : 'bg-red-500/10 border-red-500/30 hover:border-red-500/50'
             }`}>
@@ -118,7 +139,7 @@ export default function MarketCard({ market, onUpdate }: MarketCardProps) {
                 {noPercentage.toFixed(1)}%
               </div>
               <div className="text-xs text-neutral-400">
-                {formatAPT(market.no_pool)} APT
+                {formatAPT(noPool)} APT
               </div>
             </div>
           </div>
@@ -130,7 +151,7 @@ export default function MarketCard({ market, onUpdate }: MarketCardProps) {
               <div>
                 <div className="text-xs text-neutral-400">Total Volume</div>
                 <div className="text-sm font-medium text-white">
-                  {formatAPT(market.total_volume)} APT
+                  {formatAPT(Number(market.total_volume))} APT
                 </div>
               </div>
             </div>
@@ -174,7 +195,7 @@ export default function MarketCard({ market, onUpdate }: MarketCardProps) {
                 </Button>
                 
                 <Button
-                  onClick={() => handleBet(0)}
+                  onClick={() => handleBet(2)}
                   disabled={loading || !betAmount}
                   variant="glow"
                   className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 disabled:opacity-50 disabled:cursor-not-allowed"
