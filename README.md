@@ -1,4 +1,4 @@
-# Aptos Predict - Decentralized Prediction Markets
+# Cognito - Decentralized Prediction Markets
 
 <div align="center">
   <img src="https://img.shields.io/badge/Aptos-Blockchain-blue" alt="Aptos" />
@@ -9,7 +9,7 @@
 
 ## 🚀 Project Overview
 
-**Aptos Predict (Tahmin Pazarı)** is a cutting-edge decentralized prediction market platform built on the Aptos blockchain. It leverages Aptos's unique features like sub-second finality, low transaction costs, and the Move programming language to deliver an unparalleled user experience in prediction markets.
+**Cognito** is a cutting-edge decentralized prediction market platform built on the Aptos blockchain. It leverages Aptos's unique features like sub-second finality, low transaction costs, and the Move programming language to deliver an unparalleled user experience in prediction markets.
 
 🌐 **Live on Aptos Devnet** | 🎯 **ETH Global Hackathon Project** | ⚡ **Production Ready**
 

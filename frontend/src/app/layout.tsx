@@ -8,7 +8,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Aptos Predict - Decentralized Prediction Markets",
+  title: "Cognito - Decentralized Prediction Markets",
   description: "Fast, low-cost prediction markets powered by Aptos blockchain",
 };
 

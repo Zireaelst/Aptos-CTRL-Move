@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { TrendingUp, Zap, Shield, Globe } from 'lucide-react'
 import { BackgroundBeams } from '@/components/ui/background-beams'
-import { FloatingNav } from '@/components/ui/floating-navbar'
 import { SparklesCore } from '@/components/ui/sparkles'
 import WalletConnection from '@/components/WalletConnection'
 import MarketCard from '@/components/MarketCard'
@@ -33,17 +32,8 @@ export default function Home() {
 
   const activeMarkets = markets.filter(m => !m.is_resolved)
 
-  const navItems = [
-    { name: "Markets", link: "#markets" },
-    { name: "Portfolio", link: "#portfolio" },
-    { name: "About", link: "#about" },
-  ]
-
   return (
     <div className="min-h-screen bg-neutral-950 text-white overflow-hidden">
-      {/* Floating Navigation */}
-      <FloatingNav navItems={navItems} />
-
       {/* Hero Section */}
       <div className="h-screen w-full relative flex flex-col items-center justify-center">
         <div className="absolute inset-0 w-full h-full">
@@ -65,9 +55,8 @@ export default function Home() {
           </div>
 
           <h1 className="text-6xl md:text-8xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-b from-neutral-200 to-neutral-600">
-            Aptos
             <span className="block bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 animate-gradient">
-              Predict
+              Cognito
             </span>
           </h1>
 
@@ -235,7 +224,7 @@ export default function Home() {
           <div className="text-center">
             <div className="flex items-center justify-center mb-6">
               <TrendingUp className="h-8 w-8 text-blue-400 mr-3" />
-              <h3 className="text-2xl font-bold text-white">Aptos Predict</h3>
+              <h3 className="text-2xl font-bold text-white">Cognito</h3>
             </div>
             <p className="text-neutral-400 mb-8 max-w-2xl mx-auto">
               Revolutionizing prediction markets with the speed and security of Aptos blockchain.
