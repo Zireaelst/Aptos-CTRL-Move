@@ -579,10 +579,10 @@ NEXT_PUBLIC_APP_URL=https://your-domain.com
 - **Deployment**: Live and functional
 
 #### Demo Links
+- **GitHub Repository**: https://github.com/Zireaelst/Cognito-Aptos-ETH-ist
 - **Live Application**: http://localhost:3000 (during presentation)
 - **Contract Explorer**: https://explorer.aptoslabs.com/account/0x35a304995e62d1e91e576f3d43ceeb226372dfca8f246010b519f9d549b2fc6b?network=devnet
-- **GitHub Repository**: [Your Repository URL]
-- **Video Demo**: [Your Demo Video URL]
+- **Video Demo**: [Coming Soon - Hackathon Submission]
 
 #### Key Differentiators
 1. **Sub-second Finality**: Fastest prediction market experience ever
