@@ -1,188 +1,211 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { Clock, TrendingUp, TrendingDown } from 'lucide-react'
-import { Market, MarketOdds, getMarketOdds, buyShares, formatAPT, formatTimestamp, isMarketExpired, parseAPT } from '@/lib/aptos'
-import toast from 'react-hot-toast'
+import { useState } from 'react'
+import { motion } from 'framer-motion'
+import { TrendingUp, TrendingDown, Clock, Users, DollarSign } from 'lucide-react'
+import { toast } from 'react-hot-toast'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Market, buyShares } from '@/lib/aptos'
 
 interface MarketCardProps {
   market: Market
-  onUpdate?: () => void
+  onUpdate: () => void
+}
+
+function formatAPT(amount: number): string {
+  return (amount / 100000000).toFixed(2)
 }
 
 export default function MarketCard({ market, onUpdate }: MarketCardProps) {
-  const [odds, setOdds] = useState<MarketOdds>({ yes_odds: 50, no_odds: 50 })
   const [loading, setLoading] = useState(false)
   const [betAmount, setBetAmount] = useState('')
-  const [selectedOutcome, setSelectedOutcome] = useState<number | null>(null)
-  const [showBetModal, setShowBetModal] = useState(false)
 
-  const fetchOdds = useCallback(async () => {
-    const marketOdds = await getMarketOdds(market.id)
-    setOdds(marketOdds)
-  }, [market.id])
+  const totalPool = market.yes_pool + market.no_pool
+  const yesPercentage = totalPool > 0 ? (market.yes_pool / totalPool) * 100 : 50
+  const noPercentage = totalPool > 0 ? (market.no_pool / totalPool) * 100 : 50
 
-  useEffect(() => {
-    fetchOdds()
-  }, [fetchOdds])
+  const handleBet = async (outcome: 0 | 1) => {
+    if (!betAmount || isNaN(parseFloat(betAmount))) {
+      toast.error('Please enter a valid bet amount')
+      return
+    }
 
-  const handleBet = async (outcome: number) => {
-    if (!betAmount || parseFloat(betAmount) <= 0) {
-      toast.error('Please enter a valid amount')
+    const amount = parseFloat(betAmount)
+    if (amount < 0.01) {
+      toast.error('Minimum bet is 0.01 APT')
       return
     }
 
     setLoading(true)
     try {
-      const amountInOctas = parseAPT(betAmount)
-      await buyShares(market.id, outcome, amountInOctas)
-      toast.success(`Successfully placed bet on ${outcome === 1 ? 'YES' : 'NO'}!`)
+      await buyShares(market.id, outcome, Math.floor(amount * 100000000))
+      toast.success(`Successfully placed ${amount} APT bet on ${outcome === 1 ? 'YES' : 'NO'}!`)
       setBetAmount('')
-      setSelectedOutcome(null)
-      setShowBetModal(false)
-      fetchOdds()
-      onUpdate?.()
+      onUpdate()
     } catch (error) {
-      toast.error('Failed to place bet. Make sure you have enough APT.')
-      console.error(error)
+      console.error('Betting error:', error)
+      toast.error('Failed to place bet. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
-  const openBetModal = (outcome: number) => {
-    if (isMarketExpired(market.end_timestamp)) {
-      toast.error('This market has expired')
-      return
-    }
-    if (market.is_resolved) {
-      toast.error('This market has been resolved')
-      return
-    }
-    setSelectedOutcome(outcome)
-    setShowBetModal(true)
-  }
-
-  const isExpired = isMarketExpired(market.end_timestamp)
-  const totalPool = market.yes_pool + market.no_pool
+  const isResolved = market.is_resolved
+  const winningOutcome = market.winning_outcome
 
   return (
-    <>
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow">
-        <div className="flex justify-between items-start mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 flex-1 pr-4">
-            {market.description}
-          </h3>
-          <div className="flex items-center text-sm text-gray-500">
-            <Clock size={16} className="mr-1" />
-            {isExpired ? 'Expired' : formatTimestamp(market.end_timestamp)}
-          </div>
-        </div>
-
-        {market.is_resolved && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-            <div className="text-green-800 font-semibold">
-              ✓ Resolved: {market.winning_outcome === 1 ? 'YES' : 'NO'} wins
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600 mb-1">
-              {odds.yes_odds}%
-            </div>
-            <div className="text-sm text-gray-600 mb-2">YES</div>
-            <button
-              onClick={() => openBetModal(1)}
-              disabled={isExpired || market.is_resolved || loading}
-              className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-            >
-              <TrendingUp size={16} />
-              <span>Bet YES</span>
-            </button>
-          </div>
-
-          <div className="text-center">
-            <div className="text-2xl font-bold text-red-600 mb-1">
-              {odds.no_odds}%
-            </div>
-            <div className="text-sm text-gray-600 mb-2">NO</div>
-            <button
-              onClick={() => openBetModal(2)}
-              disabled={isExpired || market.is_resolved || loading}
-              className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-            >
-              <TrendingDown size={16} />
-              <span>Bet NO</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="text-sm text-gray-600 grid grid-cols-2 gap-4">
-          <div>
-            <span className="font-semibold">Total Volume:</span><br />
-            {formatAPT(totalPool)} APT
-          </div>
-          <div>
-            <span className="font-semibold">Market ID:</span><br />
-            #{market.id}
-          </div>
-        </div>
-      </div>
-
-      {/* Betting Modal */}
-      {showBetModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-semibold mb-4">
-              Place Bet on {selectedOutcome === 1 ? 'YES' : 'NO'}
-            </h3>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Amount (APT)
-              </label>
-              <input
-                type="number"
-                value={betAmount}
-                onChange={(e) => setBetAmount(e.target.value)}
-                placeholder="Enter amount in APT"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                step="0.01"
-                min="0.01"
-              />
-            </div>
-
-            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-              <div className="text-sm text-gray-600">
-                Current odds: {selectedOutcome === 1 ? odds.yes_odds : odds.no_odds}%
-              </div>
-              {betAmount && (
-                <div className="text-sm text-gray-600 mt-1">
-                  Potential return: ~{(parseFloat(betAmount) * (100 / (selectedOutcome === 1 ? odds.yes_odds : odds.no_odds))).toFixed(2)} APT
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="h-full"
+    >
+      <Card className="h-full bg-neutral-900/50 border-neutral-800 hover:border-blue-500/50 transition-all duration-300 backdrop-blur-sm">
+        <CardHeader className="pb-4">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-2">
+              {isResolved ? (
+                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-gray-500/20 text-gray-400 text-xs">
+                  <Clock className="w-3 h-3" />
+                  Resolved
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  Live
                 </div>
               )}
             </div>
+            <div className="text-xs text-neutral-500">#{market.id}</div>
+          </div>
+          
+          <CardTitle className="text-lg leading-tight text-white">
+            {market.description}
+          </CardTitle>
+        </CardHeader>
 
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setShowBetModal(false)}
-                className="flex-1 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => selectedOutcome && handleBet(selectedOutcome)}
-                disabled={loading || !betAmount}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Placing Bet...' : 'Place Bet'}
-              </button>
+        <CardContent className="space-y-6">
+          {/* Odds Display */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className={`p-4 rounded-xl border transition-all duration-300 ${
+              isResolved && winningOutcome === 1 
+                ? 'bg-green-500/20 border-green-500/50' 
+                : 'bg-green-500/10 border-green-500/30 hover:border-green-500/50'
+            }`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-green-400">YES</span>
+                <TrendingUp className="w-4 h-4 text-green-400" />
+              </div>
+              <div className="text-2xl font-bold text-white">
+                {yesPercentage.toFixed(1)}%
+              </div>
+              <div className="text-xs text-neutral-400">
+                {formatAPT(market.yes_pool)} APT
+              </div>
+            </div>
+
+            <div className={`p-4 rounded-xl border transition-all duration-300 ${
+              isResolved && winningOutcome === 0 
+                ? 'bg-red-500/20 border-red-500/50' 
+                : 'bg-red-500/10 border-red-500/30 hover:border-red-500/50'
+            }`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-red-400">NO</span>
+                <TrendingDown className="w-4 h-4 text-red-400" />
+              </div>
+              <div className="text-2xl font-bold text-white">
+                {noPercentage.toFixed(1)}%
+              </div>
+              <div className="text-xs text-neutral-400">
+                {formatAPT(market.no_pool)} APT
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </>
+
+          {/* Market Stats */}
+          <div className="grid grid-cols-2 gap-4 py-4 border-t border-neutral-800">
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-blue-400" />
+              <div>
+                <div className="text-xs text-neutral-400">Total Volume</div>
+                <div className="text-sm font-medium text-white">
+                  {formatAPT(market.total_volume)} APT
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-purple-400" />
+              <div>
+                <div className="text-xs text-neutral-400">Pool Size</div>
+                <div className="text-sm font-medium text-white">
+                  {formatAPT(totalPool)} APT
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Betting Interface */}
+          {!isResolved && (
+            <div className="space-y-4 pt-4 border-t border-neutral-800">
+              <div>
+                <label className="block text-sm font-medium text-neutral-300 mb-2">
+                  Bet Amount (APT)
+                </label>
+                <input
+                  type="number"
+                  value={betAmount}
+                  onChange={(e) => setBetAmount(e.target.value)}
+                  placeholder="0.01"
+                  min="0.01"
+                  step="0.01"
+                  className="w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white placeholder-neutral-500 focus:border-blue-500 focus:outline-none transition-colors"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  onClick={() => handleBet(1)}
+                  disabled={loading || !betAmount}
+                  variant="glow"
+                  className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Betting...' : 'Bet YES'}
+                </Button>
+                
+                <Button
+                  onClick={() => handleBet(0)}
+                  disabled={loading || !betAmount}
+                  variant="glow"
+                  className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Betting...' : 'Bet NO'}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Resolution Status */}
+          {isResolved && (
+            <div className="pt-4 border-t border-neutral-800">
+              <div className={`p-4 rounded-xl text-center ${
+                winningOutcome === 1 
+                  ? 'bg-green-500/20 border border-green-500/50' 
+                  : 'bg-red-500/20 border border-red-500/50'
+              }`}>
+                <div className="text-sm font-medium text-white mb-1">
+                  Market Resolved
+                </div>
+                <div className={`text-lg font-bold ${
+                  winningOutcome === 1 ? 'text-green-400' : 'text-red-400'
+                }`}>
+                  {winningOutcome === 1 ? 'YES' : 'NO'} Won
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
   )
 }
