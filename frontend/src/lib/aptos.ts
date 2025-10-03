@@ -204,6 +204,32 @@ export const claimWinnings = async (marketId: number) => {
   }
 };
 
+export const createMarket = async (
+  description: string,
+  duration_seconds: number
+) => {
+  if (typeof window === 'undefined' || !('aptos' in window) || !window.aptos) {
+    throw new Error('Petra wallet not found');
+  }
+
+  const transaction = {
+    type: "entry_function_payload",
+    function: `${PREDICTION_MARKET_ADDRESS}::market::create_market`,
+    arguments: [description, duration_seconds],
+    type_arguments: [],
+  };
+
+  try {
+    const aptosWallet = window.aptos;
+    const response = await aptosWallet.signAndSubmitTransaction(transaction);
+    await aptos.waitForTransaction({ transactionHash: response.hash });
+    return response;
+  } catch (error) {
+    console.error('Error creating market:', error);
+    throw error;
+  }
+};
+
 // Utility functions
 export const formatAPT = (amount: number): string => {
   return (amount / 100000000).toFixed(4); // Convert from Octas to APT

@@ -7,12 +7,16 @@ import { SparklesCore } from '@/components/ui/sparkles'
 import WalletConnection from '@/components/WalletConnection'
 import MarketCard from '@/components/MarketCard'
 import UserPortfolio from '@/components/UserPortfolio'
+import CreateMarketModal, { MarketFormData } from '@/components/CreateMarketModal'
+import AnalyticsDashboard from '@/components/AnalyticsDashboard'
+import CryptoPredictor from '@/components/CryptoPredictor'
 import { Market, getAllMarkets } from '@/lib/aptos'
 
 export default function Home() {
   const [markets, setMarkets] = useState<Market[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'markets' | 'portfolio'>('markets')
+  const [activeTab, setActiveTab] = useState<'markets' | 'portfolio' | 'analytics' | 'crypto'>('markets')
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
   useEffect(() => {
     fetchMarkets()
@@ -31,6 +35,13 @@ export default function Home() {
   }
 
   const activeMarkets = markets.filter(m => !m.is_resolved)
+
+  const handleCreateMarket = async (formData: MarketFormData) => {
+    // In a real implementation, this would call the contract
+    // For now, we'll simulate creating a market
+    console.log('Creating market:', formData)
+    // TODO: Implement actual market creation logic
+  }
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white overflow-hidden">
@@ -125,27 +136,58 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Tab Navigation */}
           <div className="flex justify-center mb-12">
-            <div className="flex p-1 rounded-full bg-neutral-900/50 backdrop-blur-sm border border-neutral-800">
-              <button
-                onClick={() => setActiveTab('markets')}
-                className={`px-6 py-3 rounded-full text-sm font-medium transition-all duration-300 ${
-                  activeTab === 'markets'
-                    ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
-                    : 'text-neutral-400 hover:text-white'
-                }`}
-              >
-                Markets
-              </button>
-              <button
-                onClick={() => setActiveTab('portfolio')}
-                className={`px-6 py-3 rounded-full text-sm font-medium transition-all duration-300 ${
-                  activeTab === 'portfolio'
-                    ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
-                    : 'text-neutral-400 hover:text-white'
-                }`}
-              >
-                Portfolio
-              </button>
+            <div className="flex items-center gap-4">
+              <div className="flex p-1 rounded-full bg-neutral-900/50 backdrop-blur-sm border border-neutral-800">
+                <button
+                  onClick={() => setActiveTab('markets')}
+                  className={`px-6 py-3 rounded-full text-sm font-medium transition-all duration-300 ${
+                    activeTab === 'markets'
+                      ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
+                      : 'text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  Markets
+                </button>
+                <button
+                  onClick={() => setActiveTab('portfolio')}
+                  className={`px-6 py-3 rounded-full text-sm font-medium transition-all duration-300 ${
+                    activeTab === 'portfolio'
+                      ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
+                      : 'text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  Portfolio
+                </button>
+                <button
+                  onClick={() => setActiveTab('analytics')}
+                  className={`px-6 py-3 rounded-full text-sm font-medium transition-all duration-300 ${
+                    activeTab === 'analytics'
+                      ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
+                      : 'text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  Analytics
+                </button>
+                <button
+                  onClick={() => setActiveTab('crypto')}
+                  className={`px-6 py-3 rounded-full text-sm font-medium transition-all duration-300 ${
+                    activeTab === 'crypto'
+                      ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
+                      : 'text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  Crypto Predict
+                </button>
+              </div>
+              
+              {activeTab === 'markets' && (
+                <button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-full text-sm font-medium text-white transition-all duration-300 shadow-lg shadow-purple-500/25"
+                >
+                  Create Market
+                </button>
+              )}
             </div>
           </div>
 
@@ -212,11 +254,50 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          ) : (
+          ) : activeTab === 'portfolio' ? (
             <UserPortfolio />
+          ) : activeTab === 'analytics' ? (
+            <AnalyticsDashboard markets={markets} />
+          ) : (
+            <div>
+              <h2 className="text-4xl font-bold text-center mb-12 bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-yellow-500">
+                Crypto Price Predictions
+              </h2>
+              <div className="space-y-8">
+                {/* BTC Predictor */}
+                <CryptoPredictor
+                  tokenSymbol="BTC"
+                  currentPrice={91234}
+                  priceChange24h={2.4}
+                  marketCap={1.88e12}
+                  onPlaceBet={(prediction, amount) => {
+                    console.log(`BTC bet: ${prediction} for ${amount} APT`)
+                    // In real app, this would create a market or bet on existing market
+                  }}
+                />
+                
+                {/* APT Predictor */}
+                <CryptoPredictor
+                  tokenSymbol="APT"
+                  currentPrice={8.45}
+                  priceChange24h={5.2}
+                  marketCap={3.2e9}
+                  onPlaceBet={(prediction, amount) => {
+                    console.log(`APT bet: ${prediction} for ${amount} APT`)
+                  }}
+                />
+              </div>
+            </div>
           )}
         </div>
       </div>
+
+      {/* Create Market Modal */}
+      <CreateMarketModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreateMarket={handleCreateMarket}
+      />
 
       {/* Footer */}
       <footer className="border-t border-neutral-800 bg-neutral-950/50 backdrop-blur-sm py-12">
